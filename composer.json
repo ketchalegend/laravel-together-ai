@@ -1,0 +1,43 @@
+{
+    "name": "ketchalegend/laravel-together-ai",
+    "description": "A Laravel package for integrating with Together AI",
+    "type": "library",
+    "license": "MIT",
+    "authors": [
+        {
+            "name": "Emmanuel Ketcha",
+            "email": "me@ketchalegend.me"
+        }
+    ],
+    "require": {
+        "php": "^7.3|^8.0",
+        "guzzlehttp/guzzle": "^7.9",
+        "illuminate/support": "^8.0|^9.0|^10.0"
+    },
+    "require-dev": {
+        "orchestra/testbench": "^8.26",
+        "phpunit/phpunit": "^9.6"
+    },
+    "autoload": {
+        "psr-4": {
+            "ketchalegend\\LaravelTogetherAI\\": "src/"
+        }
+    },
+    "autoload-dev": {
+        "psr-4": {
+            "ketchalegend\\LaravelTogetherAI\\Tests\\": "tests/"
+        }
+    },
+    "extra": {
+        "laravel": {
+            "providers": [
+                "ketchalegend\\LaravelTogetherAI\\TogetherAIServiceProvider"
+            ],
+            "aliases": {
+                "TogetherAI": "ketchalegend\\LaravelTogetherAI\\Facades\\TogetherAI"
+            }
+        }
+    },
+    "minimum-stability": "dev",
+    "prefer-stable": true
+}
