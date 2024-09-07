@@ -19,6 +19,18 @@ class Factory
         return $this;
     }
 
+    public function setMaxRetries(int $maxRetries): self
+    {
+        $this->instance->setMaxRetries($maxRetries);
+        return $this;
+    }
+
+    public function setRetryDelay(int $milliseconds): self
+    {
+        $this->instance->setRetryDelay($milliseconds);
+        return $this;
+    }
+
     public function withBaseUri(string $baseUri): self
     {
         $this->instance->withBaseUri($baseUri);

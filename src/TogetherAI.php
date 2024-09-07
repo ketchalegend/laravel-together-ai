@@ -3,7 +3,9 @@
 namespace ketchalegend\LaravelTogetherAI;
 
 use GuzzleHttp\Client;
+use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Config;
+use GuzzleHttp\Exception\RequestException;
 use ketchalegend\LaravelTogetherAI\Factory;
 use ketchalegend\LaravelTogetherAI\ChatCompletion;
 
@@ -13,6 +15,8 @@ class TogetherAI
     protected $apiKey;
     protected $baseUrl;
     protected $headers = [];
+    protected $maxRetries = 3;
+    protected $retryDelay = 1000; 
 
     protected function __construct()
     {
@@ -20,6 +24,8 @@ class TogetherAI
         $this->headers = [
             'Content-Type' => 'application/json',
         ];
+        $this->maxRetries = config('together-ai.max_retries', 3);
+        $this->retryDelay = config('together-ai.retry_delay', 1000);
     }
 
     public static function factory(): Factory
@@ -93,14 +99,55 @@ class TogetherAI
         return new ChatCompletion($this);
     }
 
+    public function setMaxRetries(int $maxRetries): self
+    {
+        $this->maxRetries = $maxRetries;
+        return $this;
+    }
+
+    public function setRetryDelay(int $milliseconds): self
+    {
+        $this->retryDelay = $milliseconds;
+        return $this;
+    }
+
     public function sendRequest($endpoint, $data)
     {
         $this->initializeClient();
-        $response = $this->client->post($endpoint, [
-            'json' => $data,
-        ]);
 
-        return $this->parseResponse($response, $data['stream'] ?? false);
+        $attempts = 0;
+        while ($attempts < $this->maxRetries) {
+            try {
+                $response = $this->client->post($endpoint, [
+                    'json' => $data,
+                ]);
+                $responseBody = json_decode($response->getBody(), true);
+
+                if (empty($responseBody['choices'][0]['message']['content'])) {
+                    Log::warning('Together AI returned an empty response content');
+                }
+
+                return $responseBody;
+            } catch (RequestException $e) {
+                $attempts++;
+
+                if ($e->getResponse() && $e->getResponse()->getStatusCode() == 503) {
+                    Log::warning("Together AI server overloaded. Attempt {$attempts} of {$this->maxRetries}");
+                    if ($attempts < $this->maxRetries) {
+                        usleep($this->retryDelay * 1000); // Convert to microseconds
+                        continue;
+                    }
+                }
+
+                Log::error('Together AI API Error: ' . $e->getMessage());
+                if ($e->hasResponse()) {
+                    Log::error('Response Body: ' . $e->getResponse()->getBody());
+                }
+                throw new \Exception('Error during chat completion: ' . $e->getMessage());
+            }
+        }
+
+        throw new \Exception('Max retry attempts reached. Together AI server is still unavailable.');
     }
 
     protected function parseStreamedResponse($response)
