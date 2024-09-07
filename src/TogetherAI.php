@@ -4,51 +4,56 @@ namespace ketchalegend\LaravelTogetherAI;
 
 use GuzzleHttp\Client;
 use Illuminate\Support\Facades\Config;
+use ketchalegend\LaravelTogetherAI\ChatCompletion;
 
 class TogetherAI
 {
     protected $client;
     protected $apiKey;
     protected $baseUrl;
+    protected $headers = [];
 
     public function __construct(array $config)
     {
         $this->apiKey = $config['api_key'];
         $this->baseUrl = $config['base_url'];
+        $this->headers = [
+            'Authorization' => 'Bearer ' . $this->apiKey,
+            'Content-Type' => 'application/json',
+        ];
+        $this->initializeClient();
+    }
+
+    protected function initializeClient()
+    {
         $this->client = new Client([
             'base_uri' => $this->baseUrl,
-            'headers' => [
-                'Authorization' => 'Bearer ' . $this->apiKey,
-                'Content-Type' => 'application/json',
-            ],
+            'headers' => $this->headers,
         ]);
     }
 
-    public function chat(array $messages, array $options = [], array $functions = null)
+    public function withHttpHeader(string $name, string $value): self
     {
-        $defaultOptions = [
-            'model' => Config::get('together-ai.default_model'),
-            'max_tokens' => Config::get('together-ai.max_tokens'),
-            'temperature' => Config::get('together-ai.temperature'),
-            'top_p' => Config::get('together-ai.top_p'),
-            'top_k' => Config::get('together-ai.top_k'),
-            'repetition_penalty' => Config::get('together-ai.repetition_penalty'),
-            'stop' => Config::get('together-ai.stop'),
-            'stream' => false
-        ];
-
-        $data = array_merge($defaultOptions, $options, ['messages' => $this->formatMessages($messages)]);
-
-        if ($functions !== null) {
-            $data['functions'] = $functions;
-        }
-
-        $response = $this->client->post('v1/chat/completions', [
-            'json' => $data,
-        ]);
-
-        return $this->parseResponse($response, $data['stream']);
+        $this->headers[$name] = $value;
+        $this->initializeClient();
+        return $this;
     }
+
+    public function withBaseUri(string $baseUri): self
+    {
+        $this->baseUrl = $baseUri;
+        $this->initializeClient();
+        return $this;
+    }
+
+    public function withApiKey(string $apiKey): self
+    {
+        $this->apiKey = trim($apiKey);
+        $this->headers['Authorization'] = 'Bearer ' . $this->apiKey;
+        $this->initializeClient();
+        return $this;
+    }
+
 
     public function streamChat(array $messages, array $options = [], array $functions = null)
     {
@@ -76,6 +81,20 @@ class TogetherAI
         } else {
             return json_decode($response->getBody(), true);
         }
+    }
+
+    public function chat()
+    {
+        return new ChatCompletion($this);
+    }
+
+    public function sendRequest($endpoint, $data)
+    {
+        $response = $this->client->post($endpoint, [
+            'json' => $data,
+        ]);
+
+        return $this->parseResponse($response, $data['stream'] ?? false);
     }
 
     protected function parseStreamedResponse($response)

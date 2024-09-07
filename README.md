@@ -29,32 +29,42 @@ TOGETHER_AI_API_KEY=your-api-key-here
 Here are various examples of how to use the Laravel Together AI package:
 
 ```php
+Here is the formatted code in Markdown for you to copy and paste:
+
 use ketchalegend\LaravelTogetherAI\Facades\TogetherAI;
 
 // Basic chat completion
-$response = TogetherAI::chat([
-    ['role' => 'user', 'content' => 'Hello, how are you?']
+$response = TogetherAI::chat()->create([
+    'messages' => [
+        ['role' => 'user', 'content' => 'Hello, how are you?']
+    ]
 ]);
 
 // Chat completion with custom parameters
-$response = TogetherAI::chat([
-    ['role' => 'user', 'content' => 'Explain quantum computing in simple terms.']
-], [
+$response = TogetherAI::chat()->create([
+    'messages' => [
+        ['role' => 'user', 'content' => 'Explain quantum computing in simple terms.']
+    ],
     'temperature' => 0.8,
     'max_tokens' => 150
 ]);
 
 // Chat with system message and multiple user messages
-$response = TogetherAI::chat([
-    ['role' => 'system', 'content' => 'You are a helpful assistant specializing in technology.'],
-    ['role' => 'user', 'content' => 'What is cloud computing?'],
-    ['role' => 'assistant', 'content' => 'Cloud computing is a technology that allows users to access and use computing resources over the internet instead of on their local computer.'],
-    ['role' => 'user', 'content' => 'What are its main benefits?']
+$response = TogetherAI::chat()->create([
+    'messages' => [
+        ['role' => 'system', 'content' => 'You are a helpful assistant specializing in technology.'],
+        ['role' => 'user', 'content' => 'What is cloud computing?'],
+        ['role' => 'assistant', 'content' => 'Cloud computing is a technology that allows users to access and use computing resources over the internet instead of on their local computer.'],
+        ['role' => 'user', 'content' => 'What are its main benefits?']
+    ]
 ]);
 
 // Streamed chat completion
-$stream = TogetherAI::streamChat([
-    ['role' => 'user', 'content' => 'Tell me a short story about a robot.']
+$stream = TogetherAI::chat()->create([
+    'messages' => [
+        ['role' => 'user', 'content' => 'Tell me a short story about a robot.']
+    ],
+    'stream' => true
 ]);
 
 foreach ($stream as $chunk) {
@@ -65,7 +75,7 @@ foreach ($stream as $chunk) {
     echo $chunk['choices'][0]['delta']['content'] ?? '';
 }
 
-// Chat completion with function calling
+// Chat completion with function calling (if supported by Together AI)
 $functions = [
     [
         'name' => 'get_current_weather',
@@ -84,9 +94,13 @@ $functions = [
     ]
 ];
 
-$response = TogetherAI::chat([
-    ['role' => 'user', 'content' => 'What\'s the weather like in New York?']
-], [], $functions);
+$response = TogetherAI::chat()->create([
+    'messages' => [
+        ['role' => 'user', 'content' => 'What\'s the weather like in New York?']
+    ],
+    'functions' => $functions,
+    'function_call' => 'auto'
+]);
 
 // Handle the response
 if (isset($response['choices'][0]['function_call'])) {
@@ -96,22 +110,28 @@ if (isset($response['choices'][0]['function_call'])) {
     echo $response['choices'][0]['message']['content'];
 }
 
-// Simplified usage for user messages
-$response = TogetherAI::chat([
-    'Hello, can you help me with a math problem?',
-    'What is the square root of 144?'
-]);
-
 // Error handling
 try {
-    $response = TogetherAI::chat([
-        ['role' => 'user', 'content' => 'Generate a very long response.']
-    ], [
-        'max_tokens' => 10000  // Assuming this exceeds the API's limit
+    $response = TogetherAI::chat()->create([
+        'messages' => [
+            ['role' => 'user', 'content' => 'Generate a very long response.']
+        ],
+        'max_tokens' => 10000 // Assuming this exceeds the API's limit
     ]);
 } catch (\Exception $e) {
     echo "An error occurred: " . $e->getMessage();
 }
+
+// Using custom headers and base URI
+$client = TogetherAI::withApiKey($newApiKey)
+    ->withBaseUri($newBaseUri)
+    ->withHttpHeader('Custom-Header', 'Custom-Value');
+
+$response = $client->chat()->create([
+    'messages' => [
+        ['role' => 'user', 'content' => 'Hello with custom configuration!']
+    ]
+]);
 ```
 
 These examples demonstrate:
