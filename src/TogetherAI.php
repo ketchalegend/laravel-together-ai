@@ -4,6 +4,7 @@ namespace ketchalegend\LaravelTogetherAI;
 
 use GuzzleHttp\Client;
 use Illuminate\Support\Facades\Config;
+use ketchalegend\LaravelTogetherAI\Factory;
 use ketchalegend\LaravelTogetherAI\ChatCompletion;
 
 class TogetherAI
@@ -13,15 +14,17 @@ class TogetherAI
     protected $baseUrl;
     protected $headers = [];
 
-    public function __construct(array $config)
+    private function __construct()
     {
-        $this->apiKey = $config['api_key'];
-        $this->baseUrl = $config['base_url'];
+        $this->baseUrl = 'https://api.together.xyz';
         $this->headers = [
-            'Authorization' => 'Bearer ' . $this->apiKey,
             'Content-Type' => 'application/json',
         ];
-        $this->initializeClient();
+    }
+
+    public static function factory(): Factory
+    {
+        return new Factory();
     }
 
     protected function initializeClient()
@@ -35,14 +38,12 @@ class TogetherAI
     public function withHttpHeader(string $name, string $value): self
     {
         $this->headers[$name] = $value;
-        $this->initializeClient();
         return $this;
     }
 
     public function withBaseUri(string $baseUri): self
     {
         $this->baseUrl = $baseUri;
-        $this->initializeClient();
         return $this;
     }
 
@@ -50,7 +51,6 @@ class TogetherAI
     {
         $this->apiKey = trim($apiKey);
         $this->headers['Authorization'] = 'Bearer ' . $this->apiKey;
-        $this->initializeClient();
         return $this;
     }
 
@@ -90,6 +90,7 @@ class TogetherAI
 
     public function sendRequest($endpoint, $data)
     {
+        $this->initializeClient();
         $response = $this->client->post($endpoint, [
             'json' => $data,
         ]);
