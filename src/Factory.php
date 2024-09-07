@@ -10,7 +10,7 @@ class Factory
 
     public function __construct()
     {
-        $this->instance = new TogetherAI();
+        $this->instance = TogetherAI::create();
     }
 
     public function withApiKey(string $apiKey): self

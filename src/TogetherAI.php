@@ -14,7 +14,7 @@ class TogetherAI
     protected $baseUrl;
     protected $headers = [];
 
-    private function __construct()
+    protected function __construct()
     {
         $this->baseUrl = 'https://api.together.xyz';
         $this->headers = [
@@ -25,6 +25,11 @@ class TogetherAI
     public static function factory(): Factory
     {
         return new Factory();
+    }
+
+    public static function create(): self
+    {
+        return new self();
     }
 
     protected function initializeClient()
