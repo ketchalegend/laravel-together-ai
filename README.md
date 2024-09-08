@@ -1,10 +1,10 @@
 # Laravel Together AI
 
-This package provides a simple way to interact with the Together AI API in your Laravel application.
+This package provides an easy integration with the Together AI API for your Laravel application.
 
 ## Installation
 
-You can install the package via composer:
+Install the package via Composer:
 
 ```bash
 composer require ketchalegend/laravel-together-ai
@@ -29,7 +29,6 @@ TOGETHER_AI_API_KEY=your-api-key-here
 Here are various examples of how to use the Laravel Together AI package:
 
 ```php
-Here is the formatted code in Markdown for you to copy and paste:
 
 use ketchalegend\LaravelTogetherAI\Facades\TogetherAI;
 
@@ -122,10 +121,13 @@ try {
     echo "An error occurred: " . $e->getMessage();
 }
 
-// Using custom headers and base URI
-$client = TogetherAI::withApiKey($newApiKey)
+// Using custom headers and base URI   
+
+$client = TogetherAI::factory()
+    ->withApiKey($newApiKey)
     ->withBaseUri($newBaseUri)
     ->withHttpHeader('Custom-Header', 'Custom-Value');
+    ->make();
 
 $response = $client->chat()->create([
     'messages' => [
